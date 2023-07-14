@@ -1,6 +1,28 @@
 const mysqlConnection = require('../zaraConnection');
 
 
+
+function createProduitTable() {
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS produit (
+        zaraid INT PRIMARY KEY,
+        zarabrand VARCHAR(20) NOT NULL,
+        zaraname VARCHAR(20) NOT NULL,
+        zaramodel VARCHAR(20) NOT NULL,
+        zaraquant INT NOT NULL,
+        zaracolor VARCHAR(20) NOT NULL,
+        zarareference VARCHAR(20) NOT NULL
+      )`;
+  
+    mysqlConnection.query(createTableQuery, (err, result) => {
+      if (err) {
+        console.error("Error creating 'produit' table:", err);
+      } else {
+        console.log("Table 'produit' created successfully");
+      }
+    });
+  }
+
 const getAllProduit = (req, res) => {
   mysqlConnection.query("SELECT * FROM produit", (err, rows, fields) => {
     if (!err) res.send(rows);
@@ -38,5 +60,6 @@ const updateProduit = (quant, id) => {
 module.exports = {
     getAllProduit,
     updateQuant,
+    createProduitTable,
   };
   

@@ -1,6 +1,30 @@
 // controllers/existController.js
 const mysqlConnection = require('../existConnection');
 
+
+
+function createProduitTable() {
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS product (
+        existid INT PRIMARY KEY,
+        existname VARCHAR(20) NOT NULL,
+        existmodel VARCHAR(20) NOT NULL,
+        existbrand VARCHAR(20) NOT NULL,
+        existquant INT NOT NULL,
+        existreference VARCHAR(20) NOT NULL
+        existcolor VARCHAR(20) NOT NULL,
+      )`;
+  
+    mysqlConnection.query(createTableQuery, (err, result) => {
+      if (err) {
+        console.error("Error creating 'produit' table:", err);
+      } else {
+        console.log("Table 'produit' created successfully");
+      }
+    });
+  }
+
+
 // Get all products
 const getAllProducts = (req, res) => {
   mysqlConnection.query('SELECT * FROM Product', (err, rows, fields) => {
@@ -38,4 +62,5 @@ const updateProduct = (quant, id) => {
 module.exports = {
   getAllProducts,
   updateQuant,
+  createProduitTable,
 };

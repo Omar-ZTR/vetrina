@@ -1,5 +1,43 @@
 const axios = require("axios");
+const mysql = require("mysql");
+
 const conn = require("../connection");
+function createTables() {
+  const createVetrinaTableQuery = `
+    CREATE TABLE IF NOT EXISTS verina (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      brand VARCHAR(255),
+      id_item INT,
+      name VARCHAR(255),
+      model VARCHAR(255),
+      quant INT,
+      color VARCHAR(255)
+    )`;
+
+  const createApiURLsTableQuery = `
+    CREATE TABLE IF NOT EXISTS apis (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255),
+      url VARCHAR(255),
+      updateurl VARCHAR(255)
+    )`;
+
+  conn.query(createVetrinaTableQuery, (err, result) => {
+    if (err) {
+      console.error("Error creating 'vetrina' table:", err);
+    } else {
+      console.log("Table 'vetrina' created successfully");
+    }
+  });
+
+  conn.query(createApiURLsTableQuery, (err, result) => {
+    if (err) {
+      console.error("Error creating 'apiURLs' table:", err);
+    } else {
+      console.log("Table 'apiURLs' created successfully");
+    }
+  });
+}
 
 const posted = async (req, res) => {
   try {
@@ -29,7 +67,7 @@ const posted = async (req, res) => {
       const { columnNames: columnNamesName } = await searchColumnNames(
         req,
         res,
-        ["name", "nom", ""],
+        ["name", "nom"],
         apiURLs
       );
       console.log("columnNamesName", columnNamesName);
@@ -363,4 +401,5 @@ module.exports = {
   posted,
   insertApiData,
   update,
+  createTables,
 };
