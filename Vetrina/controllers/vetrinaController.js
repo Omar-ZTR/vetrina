@@ -1,78 +1,7 @@
-const mysql = require("mysql");
 const axios = require("axios");
-const express = require("express");
-var app = express();
+const conn = require("../connection");
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< connection
-var conn = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "vetrina",
-});
-
-conn.connect((err) => {
-  if (!err) console.log("DB-vetrina connection succeded");
-  else
-    console.log(
-      "DB-vetrina connection failed \n error : " +
-        JSON.stringify(err, undefined, 2)
-    );
-});
-
-app.listen(4000, () => console.log("exxpress server-vetrina work"));
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< get and insert data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-//               <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< get data
-
-function getData(urls) {
-  const requests = urls.map((URL) => axios.get(URL));
-
-  return Promise.all(requests)
-    .then((responses) => responses.map((response) => response.data))
-    .catch((error) => {
-      throw new Error(`Error fetching data: ${error.message}`);
-    });
-}
-//         <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Define filterColumnNames function
-function filterColumnNames(columnNames, searchKeywords) {
-  return columnNames.filter((cn) =>
-    searchKeywords.some((keyword) => cn.includes(keyword))
-  );
-}
-//           <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< search columnNames >
-async function searchColumnNames(req, res, searchKeyword, apiURLs) {
-  try {
-    const responses = await getData(apiURLs);
-    const columnNames = [];
-
-    responses.forEach((response) => {
-      const apiColumnNames = Object.keys(response[0]);
-      columnNames.push(...apiColumnNames);
-    });
-
-    console.log("Column Names:", columnNames);
-
-    const keywordsArray = Array.isArray(searchKeyword)
-      ? searchKeyword
-      : searchKeyword.split(",");
-    if (keywordsArray.length > 0) {
-      const filteredColumnNames = filterColumnNames(columnNames, keywordsArray);
-      return { responses, columnNames: filteredColumnNames };
-    } else {
-      return { responses, columnNames };
-    }
-  } catch (error) {
-    console.error("Error searching column names:", error.message);
-    res.status(500).send("Error searching column names");
-    throw error; // Rethrow the error to ensure proper error handling
-  }
-}
-//             <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< insert data
-
-app.post("/posted", async (req, res) => {
+const posted = async (req, res) => {
   try {
     const apiURLsQuery = "SELECT url FROM apiURLs";
     conn.query(apiURLsQuery, async (error, results) => {
@@ -85,7 +14,6 @@ app.post("/posted", async (req, res) => {
       const apiURLs = results.map((row) => row.url);
 
       const data = await getData(apiURLs);
-      console.log("type data  >>", typeof data);
       console.log(data);
 
       const { responses, columnNames: columnNamesBrand } =
@@ -101,7 +29,7 @@ app.post("/posted", async (req, res) => {
       const { columnNames: columnNamesName } = await searchColumnNames(
         req,
         res,
-        ["name"],
+        ["name", "nom", ""],
         apiURLs
       );
       console.log("columnNamesName", columnNamesName);
@@ -197,10 +125,9 @@ app.post("/posted", async (req, res) => {
     console.error("Error retrieving data:", error.message);
     res.status(500).send("Error retrieving data");
   }
-});
+};
 
-//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< insert api
-app.post("/insert-api-data", async (req, res) => {
+const insertApiData = async (req, res) => {
   try {
     const { name, url, updateurl } = req.body;
 
@@ -243,88 +170,9 @@ app.post("/insert-api-data", async (req, res) => {
     console.error("Error inserting/updating data:", error.message);
     res.status(500).send("Error inserting/updating data");
   }
-});
+};
 
-// <<<<<<<<<<<<<<<<<<<<<<<< update quant >>>>>>>>>>>>>>>>>>>>>>>>>>>
-//     //        find url of product>>>>>>>>>>>>>>>>>>>>>>>>>>>
-function findProduct(id) {
-  return new Promise((resolve, reject) => {
-    conn.query(
-      "SELECT brand FROM vetrina WHERE id = ?",
-      id,
-      (err, rows, fields) => {
-        if (err) {
-          console.error(err);
-          reject(err);
-          return;
-        }
-
-        if (rows.length > 0) {
-          const brand = rows[0].brand;
-          conn.query(
-            "SELECT updateURL FROM apiurls WHERE name = ?",
-            brand,
-            (err, rows, fields) => {
-              if (err) {
-                console.error(err);
-                reject(err);
-                return;
-              }
-
-              let urlUP = "";
-              console.log("typekjkjjkjkjk", typeof urlUP);
-              console.log("typekjkjjkjkjk", rows[0]);
-
-              if (rows.length > 0) {
-                urlUP = rows[0].updateURL;
-              } else {
-                console.log("URL not found for brand:", brand);
-              }
-
-              resolve(urlUP);
-              console.log("fffbfbf", urlUP);
-            }
-          );
-        } else {
-          console.log("Product not found");
-          console.log("Product not ii", id);
-
-          resolve(null);
-        }
-      }
-    );
-  });
-}
-
-////         <<<<<<<<<<<<<< send to update >>>>>>>>>>>>>>>>>>>>
-function getCurrentQuant(id) {
-  return new Promise((resolve, reject) => {
-    console.log("cccc id", id);
-
-    conn.query(
-      "SELECT quant FROM vetrina WHERE id = ?",
-      [id],
-      (err, rows, fields) => {
-        if (err) {
-          console.error("Error retrieving current quant:", err);
-          reject(err);
-          return;
-        }
-        console.log("cccc", rows[0]);
-
-        if (rows && rows.length > 0) {
-          const currentQuant = rows[0].quant;
-          resolve(currentQuant);
-        } else {
-          console.log("No item found for the given id:", id);
-          resolve(null);
-        }
-      }
-    );
-  });
-}
-
-app.get("/update", async (req, res) => {
+const update = async (req, res) => {
   try {
     let { id, quant } = req.body;
 
@@ -356,30 +204,127 @@ app.get("/update", async (req, res) => {
     console.error("Error sending parameters:", error.message);
     res.status(500).send("Error sending parameters");
   }
-});
+};
 
-///                 update product in my data
-const updateProduct = (quant, id) => {
-  console.log("up me", id, "<>", quant);
-  return new Promise((resolve, reject) => {
-    const query = "UPDATE vetrina SET quant = ? WHERE id= ?";
-    conn.query(query, [quant, id], (err, result) => {
-      if (!err) {
-        console.log("Rows updated:", result.affectedRows);
-        resolve();
-      } else {
-        console.error("Error updating product:", err);
-        reject(err);
-      }
+const getData = async (urls) => {
+  const requests = urls.map((URL) => axios.get(URL));
+
+  return Promise.all(requests)
+    .then((responses) => responses.map((response) => response.data))
+    .catch((error) => {
+      throw new Error(`Error fetching data: ${error.message}`);
     });
+};
+
+const filterColumnNames = (columnNames, searchKeywords) => {
+  return columnNames.filter((cn) =>
+    searchKeywords.some((keyword) => cn.includes(keyword))
+  );
+};
+
+const searchColumnNames = async (req, res, searchKeyword, apiURLs) => {
+  try {
+    const responses = await getData(apiURLs);
+    const columnNames = [];
+
+    responses.forEach((response) => {
+      const apiColumnNames = Object.keys(response[0]);
+      columnNames.push(...apiColumnNames);
+    });
+
+    console.log("Column Names:", columnNames);
+
+    const keywordsArray = Array.isArray(searchKeyword)
+      ? searchKeyword
+      : searchKeyword.split(",");
+    if (keywordsArray.length > 0) {
+      const filteredColumnNames = filterColumnNames(columnNames, keywordsArray);
+      return { responses, columnNames: filteredColumnNames };
+    } else {
+      return { responses, columnNames };
+    }
+  } catch (error) {
+    console.error("Error searching column names:", error.message);
+    res.status(500).send("Error searching column names");
+    throw error; // Rethrow the error to ensure proper error handling
+  }
+};
+
+const getCurrentQuant = async (id) => {
+  return new Promise((resolve, reject) => {
+    console.log(" id", id);
+
+    conn.query(
+      "SELECT quant FROM vetrina WHERE id = ?",
+      [id],
+      (err, rows, fields) => {
+        if (err) {
+          console.error("Error retrieving current quant:", err);
+          reject(err);
+          return;
+        }
+        console.log(rows[0]);
+
+        if (rows && rows.length > 0) {
+          const currentQuant = rows[0].quant;
+          resolve(currentQuant);
+        } else {
+          console.log("No item found for the given id:", id);
+          resolve(null);
+        }
+      }
+    );
   });
 };
 
-///         <<<<<<<<<<<<<<<<<<<<< select the prodact to update >>>>>>>>>>>>>
-async function selectIdItem(id) {
+const findProduct = async (id) => {
   return new Promise((resolve, reject) => {
-    console.log("idffitem", id);
+    conn.query(
+      "SELECT brand FROM vetrina WHERE id = ?",
+      id,
+      (err, rows, fields) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+          return;
+        }
 
+        if (rows.length > 0) {
+          const brand = rows[0].brand;
+          conn.query(
+            "SELECT updateURL FROM apiurls WHERE name = ?",
+            brand,
+            (err, rows, fields) => {
+              if (err) {
+                console.error(err);
+                reject(err);
+                return;
+              }
+
+              let urlUP = "";
+
+              if (rows.length > 0) {
+                urlUP = rows[0].updateURL;
+              } else {
+                console.log("URL not found for brand:", brand);
+              }
+
+              resolve(urlUP);
+              console.log("fffbfbf", urlUP);
+            }
+          );
+        } else {
+          console.log("Product not found");
+
+          resolve(null);
+        }
+      }
+    );
+  });
+};
+
+const selectIdItem = async (id) => {
+  return new Promise((resolve, reject) => {
     const query = "SELECT id_item FROM vetrina WHERE id = ?";
     conn.query(query, [id], (err, rows, fields) => {
       if (err) {
@@ -397,6 +342,25 @@ async function selectIdItem(id) {
       }
     });
   });
-}
+};
 
-//<<<<<<<< end of update >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+const updateProduct = async (quant, id) => {
+  return new Promise((resolve, reject) => {
+    const query = "UPDATE vetrina SET quant = ? WHERE id= ?";
+    conn.query(query, [quant, id], (err, result) => {
+      if (!err) {
+        console.log("Rows updated:", result.affectedRows);
+        resolve();
+      } else {
+        console.error("Error updating product:", err);
+        reject(err);
+      }
+    });
+  });
+};
+
+module.exports = {
+  posted,
+  insertApiData,
+  update,
+};
