@@ -2,14 +2,17 @@ const express = require('express');
 const router = express.Router();
 const existController = require('../controllers/existController');
 
+router.post('/create-table', existController.createProduitTable);
 
-router.post('/createtable', existController.createProduitTable);
-
-
-// Get all products
 router.get('/products', existController.getAllProducts);
 
-// Update quant
-router.get('/updating', existController.updateQuant);
+router.put('/update-quant', existController.updateQuant);
+
+router.get('/allproducts', existController.readAllProducts);
+
+router.post('/insertProduct', existController.insertProduct);
+
+
+
 
 module.exports = router;

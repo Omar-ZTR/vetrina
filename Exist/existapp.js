@@ -1,12 +1,19 @@
+
+
 const express = require('express');
+const existRoute = require('./routes/existRoutes');
 const bodyParser = require('body-parser');
-const existRoutes = require('./routes/existRoutes');
 
-var app = express();
 
+const app = express();
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Other middleware and configurations
 
-app.use('/', existRoutes);
+app.use('/produits', existRoute);
 
-app.listen(3000, () => console.log('Express server-exist works'));
+// Other routes and configurations
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server exist is running port ${PORT}`);
+});

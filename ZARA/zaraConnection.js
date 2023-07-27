@@ -1,20 +1,18 @@
 
-const mysql = require('mysql');
+const { Sequelize } = require('sequelize');
 
-const mysqlConnection = mysql.createConnection({
+const sequelize = new Sequelize('zara', 'root', '', {
   host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'zara',
+  dialect: 'mysql',
 });
 
-mysqlConnection.connect((err) => {
-  if (!err) console.log('DB-exist connection succeeded');
-  else
-    console.log(
-      'DB-exist connection failed \n error : ' +
-        JSON.stringify(err, undefined, 2)
-    );
-});
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('DB-vetrina connection succeeded');
+  })
+  .catch((error) => {
+    console.error('DB-vetrina connection failed:', error);
+  });
 
-module.exports = mysqlConnection;
+module.exports = sequelize;

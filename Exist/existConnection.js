@@ -1,20 +1,17 @@
+const { Sequelize } = require('sequelize');
 
-const mysql = require('mysql');
-
-const mysqlConnection = mysql.createConnection({
+const sequelize = new Sequelize('exist', 'root', '', {
   host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'exist',
+  dialect: 'mysql',
 });
 
-mysqlConnection.connect((err) => {
-  if (!err) console.log('DB-exist connection succeeded');
-  else
-    console.log(
-      'DB-exist connection failed \n error : ' +
-        JSON.stringify(err, undefined, 2)
-    );
-});
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('DB-exist connection succeeded');
+  })
+  .catch((error) => {
+    console.error('DB-exist connection failed:', error);
+  });
 
-module.exports = mysqlConnection;
+module.exports = sequelize;
