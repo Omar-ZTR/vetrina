@@ -127,9 +127,11 @@ const getAllProducts = async (req, res) => {
 };
 // Update quant
 const updateQuant = async (req, res) => {
-  const params = req.query;
-  const id = params.id;
-  const quant = params.quant;
+
+  const params = req.body;
+  const id = params.params.id;
+  console.log(id,"iddiddidididididid")
+  const quant = params.params.quant;
   console.log('Received Parameters:', params);
   res.send('Parameters received successfully');
 

@@ -1,11 +1,13 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../zaraConnection");
+// Old Produit model definition
 const Produit = sequelize.define('produit', {
   zaraid: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
+
   zarabrand: {
     type: DataTypes.STRING(20),
     allowNull: false
@@ -30,10 +32,10 @@ const Produit = sequelize.define('produit', {
     type: DataTypes.STRING(20),
     allowNull: false
   }
-},
-{
+}, {
   tableName: "produit",
   timestamps: false,
 });
+
 
 module.exports = Produit;

@@ -21,7 +21,6 @@ const insertProduit = async (req, res) => {
 
     // Create a new product record in the database
     const newProduct = await produit.create({
-      zaraid,
       zaraname,
       zaramodel,
       zarabrand,
@@ -39,6 +38,7 @@ const insertProduit = async (req, res) => {
     res.status(500).send('Error inserting product');
   }
 };
+
 // Assuming you have imported required modules and set up Sequelize model correctly.
 
 // Recursive function to find the path of an attribute in the data object

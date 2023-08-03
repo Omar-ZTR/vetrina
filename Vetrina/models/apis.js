@@ -47,3 +47,6 @@ const Apis = sequelize.define(
 );
 
 module.exports = Apis;
+
+
+
